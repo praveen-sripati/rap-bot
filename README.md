@@ -44,8 +44,8 @@ To get this project running on your local machine, follow these steps.
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/your-username/rap-oracle-ai.git
-cd rap-oracle-ai
+git clone https://github.com/praveen-sripati/rap-bot.git
+cd rap-bot-ai
 ```
 
 ### 2. Install Backend Dependencies
