@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tha Rap Bot [v3.0 - Matrix Edition]</title>
+  <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+  <style>
+    /* --- CSS with Matrix Canvas and Spacing Adjustments --- */
+    :root {
+      --background-color: #000;
+      /* Black background for Matrix effect */
+      --text-color: #00ff41;
+      --glow-color: rgba(0, 255, 65, 0.5);
+      --container-bg: rgba(25, 25, 25, 0.85);
+      /* Slightly transparent container */
+      --border-color: #00ff41;
+    }
+
+    /* NEW: Canvas Styling */
+    #matrix-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      /* Place canvas behind all other content */
+    }
+
+    body {
+      font-family: 'VT323', monospace;
+      background-color: var(--background-color);
+      color: var(--text-color);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+      text-shadow: 0 0 5px var(--glow-color);
+      box-sizing: border-box;
+    }
+
+    .container {
+      text-align: center;
+      background-color: var(--container-bg);
+      padding: 30px 40px;
+      /* Adjusted padding */
+      border: 2px solid var(--border-color);
+      box-shadow: 0 0 25px var(--glow-color);
+      max-width: 700px;
+      width: 100%;
+      backdrop-filter: blur(2px);
+      /* Frosted glass effect over the canvas */
+    }
+
+    h1 {
+      font-size: 3.5rem;
+      margin-top: 0;
+      margin-bottom: 15px;
+      /* Adjusted spacing */
+      animation: flicker 1.5s infinite alternate;
+    }
+
+    .subtitle {
+      font-size: 1.2rem;
+      color: #ccc;
+      margin-top: 0;
+      margin-bottom: 35px;
+      /* Increased space after subtitle */
+      text-shadow: none;
+    }
+
+    .input-group {
+      margin-bottom: 35px;
+      /* Increased space */
+    }
+
+    #user-input {
+      width: 70%;
+      padding: 12px;
+      border: 2px solid var(--border-color);
+      border-radius: 0;
+      font-size: 1.2rem;
+      font-family: 'VT323', monospace;
+      background-color: #111;
+      color: var(--text-color);
+      margin-right: -4px;
+      /* Align with button */
+    }
+
+    #user-input:focus {
+      outline: none;
+      box-shadow: 0 0 10px var(--glow-color);
+    }
+
+    #get-quote-btn {
+      padding: 12px 25px;
+      font-size: 1.2rem;
+      font-family: 'VT323', monospace;
+      color: #111;
+      background-color: var(--text-color);
+      border: 2px solid var(--border-color);
+      border-radius: 0;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-shadow: none;
+      vertical-align: top;
+      /* Align with input box */
+    }
+
+    #get-quote-btn:hover {
+      background-color: #111;
+      color: var(--text-color);
+      box-shadow: 0 0 15px var(--glow-color);
+    }
+
+    #get-quote-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    #quote-display {
+      margin-top: 30px;
+      padding: 25px;
+      /* Increased padding */
+      background-color: rgba(0, 0, 0, 0.4);
+      border: 2px solid var(--border-color);
+      min-height: 140px;
+      /* Adjusted height */
+      text-align: left;
+    }
+
+    #quote-text {
+      font-size: 1.8rem;
+      line-height: 1.5;
+      /* Adjusted line height */
+      color: var(--text-color);
+      margin: 0;
+      white-space: pre-wrap;
+    }
+
+    #quote-attribution {
+      font-size: 1.2rem;
+      color: #ccc;
+      text-shadow: none;
+      margin-top: 25px;
+      /* Increased space */
+      text-align: right;
+    }
+
+    .blinking-cursor {
+      animation: blink 1s step-end infinite;
+    }
+
+    @keyframes blink {
+
+      from,
+      to {
+        color: transparent;
+      }
+
+      50% {
+        color: var(--text-color);
+      }
+    }
+
+    @keyframes flicker {
+
+      0%,
+      18%,
+      22%,
+      25%,
+      53%,
+      57%,
+      100% {
+        text-shadow: 0 0 4px var(--glow-color), 0 0 11px var(--glow-color), 0 0 19px var(--glow-color);
+      }
+
+      20%,
+      24%,
+      55% {
+        text-shadow: none;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <canvas id="matrix-canvas"></canvas>
+
+  <div class="container">
+    <h1>[ Rap Bot ]</h1>
+    <p class="subtitle">> C:/A.I./RAP_ORACLE.EXE</p>
+
+    <div class="input-group">
+      <input type="text" id="user-input" placeholder="Enter query...">
+      <button id="get-quote-btn">EXECUTE</button>
+    </div>
+
+    <div id="quote-display">
+      <p id="quote-text">Awaiting transmission...<span class="blinking-cursor">_</span></p>
+      <p id="quote-attribution"></p>
+    </div>
+  </div>
+
+  <script>
+    // --- Script section with "Enter" key functionality ---
+    const getQuoteBtn = document.getElementById('get-quote-btn');
+    const userInput = document.getElementById('user-input');
+    const quoteTextElem = document.getElementById('quote-text');
+    const quoteAttribElem = document.getElementById('quote-attribution');
+    let typeInterval;
+
+    function typeWriter(textWithHtml, element, onComplete) {
+      const splitIndex = textWithHtml.lastIndexOf('<');
+      const textToType = textWithHtml.substring(0, splitIndex);
+      const cursorHtml = textWithHtml.substring(splitIndex);
+
+      let i = 0;
+      element.innerHTML = cursorHtml;
+      if (typeInterval) clearInterval(typeInterval);
+
+      typeInterval = setInterval(() => {
+        if (i <= textToType.length) {
+          const currentTypedText = textToType.substring(0, i);
+          element.innerHTML = currentTypedText + cursorHtml;
+          i++;
+        } else {
+          clearInterval(typeInterval);
+          if (onComplete) onComplete();
+        }
+      }, 50);
+    }
+
+    async function getAiQuote() {
+      // Check if the button is already disabled; if so, do nothing.
+      // This prevents multiple requests from being sent.
+      if (getQuoteBtn.disabled) {
+        return;
+      }
+
+      const question = userInput.value;
+      quoteAttribElem.innerHTML = '';
+      getQuoteBtn.disabled = true;
+      getQuoteBtn.textContent = 'TRANSMITTING...';
+      typeWriter("Accessing lyrical database...<span class='blinking-cursor'>_</span>", quoteTextElem);
+
+      try {
+        const response = await fetch('http://localhost:3000/get-rap-quote', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            question: question
+          })
+        });
+        if (!response.ok) throw new Error('Network response was not ok');
+        const data = await response.json();
+        const formattedQuote = data.quote.replace(/\\n/g, '\n');
+        typeWriter(`"${formattedQuote}"<span class='blinking-cursor'>_</span>`, quoteTextElem, () => {
+          quoteAttribElem.innerHTML = `- ${data.artist}`;
+          const cursor = quoteTextElem.querySelector('.blinking-cursor');
+          if (cursor) cursor.style.display = 'none';
+        });
+      } catch (error) {
+        console.error("Failed to fetch quote:", error);
+        quoteTextElem.innerHTML = ">> TRANSMISSION FAILED. ORACLE OFFLINE. <<";
+      } finally {
+        getQuoteBtn.disabled = false;
+        getQuoteBtn.textContent = 'EXECUTE';
+      }
+    }
+
+    // Event listener for the button click
+    getQuoteBtn.addEventListener('click', getAiQuote);
+
+    // --- NEW CODE STARTS HERE ---
+    // Add event listener for the 'Enter' key on the input field
+    userInput.addEventListener('keydown', (event) => {
+      // Check if the key pressed was 'Enter'
+      if (event.key === 'Enter') {
+        // Prevent the default action (like trying to submit a form)
+        event.preventDefault();
+        // Trigger the same function as the button click
+        getAiQuote();
+      }
+    });
+    // --- NEW CODE ENDS HERE ---
+
+
+    // --- The Matrix Digital Rain script remains unchanged ---
+    const canvas = document.getElementById('matrix-canvas');
+    const ctx = canvas.getContext('2d');
+
+    let drops = [];
+    let fontSize = 16;
+    let columns = 0;
+
+    const characters =
+      'アァカサタナハマヤャラワガザダバパイィキシチニヒミリヰギジヂビピウゥクスツヌフムユュルグズブプエェケセテネヘメレヱゲゼデベペオォコソトノホモヨョロヲゴゾドボポヴッン0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+    function initializeMatrix() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+
+      columns = Math.floor(canvas.width / fontSize);
+      drops = [];
+      for (let i = 0; i < columns; i++) {
+        drops[i] = 1;
+      }
+    }
+
+    function drawMatrix() {
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.fillStyle = '#00ff41';
+      ctx.font = fontSize + 'px VT323, monospace';
+
+      for (let i = 0; i < drops.length; i++) {
+        const text = characters.charAt(Math.floor(Math.random() * characters.length));
+        ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+
+        if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+          drops[i] = 0;
+        }
+        drops[i]++;
+      }
+    }
+
+    initializeMatrix();
+    setInterval(drawMatrix, 33);
+    window.addEventListener('resize', initializeMatrix);
+  </script>
+</body>
+
+</html>
