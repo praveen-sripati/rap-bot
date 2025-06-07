@@ -1,5 +1,5 @@
 
-# The Rap Oracle (AI-Powered) 🚀
+# The Rap Bot (AI-Powered) 🚀
 
 A retro-themed, AI-powered web application that answers your questions with witty, philosophical, or hilariously irrelevant rap quotes. Styled as a 90s computer terminal with a "Matrix" digital rain background, the Rap Bot provides a unique and fun user experience.
 
